@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
+<head>
+  <title>上岸小分队--数据地图显示</title>
+  <style>
+    #map {
+      position: relative;
+      width: 1400px;
+      height: 750px;
+      background-color: #f0f0f0;
+    }
+
+    .custom-marker {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      transform: translate(-50%, -50%);
+    }
+    .amap-icon img,
+        .amap-marker-content img{
+            width: 25px;
+            height: 34px;
+        }
+
+        .marker {
+            position: absolute;
+            top: -20px;
+            right: -118px;
+            color: #fff;
+            padding: 4px 10px;
+            box-shadow: 1px 1px 1px rgba(10, 10, 10, .2);
+            white-space: nowrap;
+            font-size: 12px;
+            font-family: "";
+            background-color: #25A5F7;
+            border-radius: 3px;
+        }
+
+        .input-card{
+            width: 18rem;
+            z-index: 170;
+        }
+
+        .input-card .btn{
+            margin-right: .8rem;
+        }
+
+        .input-card .btn:last-child{
+            margin-right: 0;
+        }
+  </style>
+   <script src="https://webapi.amap.com/maps?v=1.4.13&key=4164987a626ea24803e811e5ceed1bf1"></script>
+   <script src="https://a.amap.com/jsapi_demos/static/demo-center/js/demoutils.js"></script>
+
+</head>
+<body>
+      <div id="map"></div>
+      <input type="file" id="csvFileInput" accept=".csv">
+      <script>
+        // 创建地图对象
+        const map = new AMap.Map('map', {
+        viewMode: '2D', // 默认使用 2D 模式，如果希望使用带有俯仰角的 3D 模式，请设置 viewMode: '3D'
+        zoom:15, // 初始化地图层级
+        center: [114.22243,30.653243] // 初始化地图中心点
+        });
+    
+        // 自定义标记点图片路径
+        const markerImagePath = 'poi-marker-default.png';
+    
+        // 异步读取 CSV 文件
+        function readCSVFile(file) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+    
+            reader.onload = function(event) {
+              const csvData = event.target.result;
+              const markerData = parseCSV(csvData);
+              resolve(markerData);
+            };
+    
+            reader.onerror = function() {
+              reject(new Error('Failed to read CSV file.'));
+            };
+    
+            reader.readAsText(file);
+          });
+        }
+    
+        // 从 CSV 文件读取坐标数据
+        function parseCSV(csvData) {
+          const lines = csvData.split('\n');
+          const markerData = [];
+    
+          for (let i = 0; i < lines.length; i++) {
+            const parts = lines[i].split(',');
+            const lat = parseFloat(parts[2]);
+            const lng = parseFloat(parts[3]);
+    
+            if (!isNaN(lat) && !isNaN(lng)) {
+              markerData.push({ lat, lng });
+            }
+          }
+    
+          return markerData;
+        }
+    
+        // 循环生成标记点
+        function generateMarkers(markerData) {
+          markerData.forEach(marker => {
+            const markerObj = new AMap.Marker({
+              position: [marker.lng, marker.lat],
+              icon: markerImagePath,
+              offset: new AMap.Pixel(-16, -16), // 自定义图片偏移量
+              map: map
+            });
+          });
+        }
+    
+        // 监听文件输入框的变化
+        const fileInput = document.getElementById('csvFileInput');
+        fileInput.addEventListener('change', function(event) {
+          const file = event.target.files[0];
+    
+          if (file) {
+            readCSVFile(file)
+              .then(markerData => {
+                generateMarkers(markerData);
+              })
+              .catch(error => {
+                console.error(error);
+              });
+          }
+        });
+      </script>
+    </body>
+    </html>
+
